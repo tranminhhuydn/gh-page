@@ -1,66 +1,33 @@
+/*
+ * Create form to request access token from Google's OAuth 2.0 server.
+ */
+function oauthSignIn() {
+  // Google's OAuth 2.0 endpoint for requesting an access token
+  var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
 
-var lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
-    auth: {
-      params: { scope: 'openid email' } //Details: https://auth0.com/docs/scopes
-    },
-    rememberLastLogin: true
-  });
+  // Create <form> element to submit parameters to OAuth 2.0 endpoint.
+  var form = document.createElement('form');
+  form.setAttribute('method', 'GET'); // Send as a GET request.
+  form.setAttribute('action', oauth2Endpoint);
 
-  $('.btn-login').click(function(e) {
-    e.preventDefault();
-    lock.show();
-  });
+  // Parameters to pass to OAuth 2.0 endpoint.
+  var params = {'client_id': 'YOUR_CLIENT_ID',
+                'redirect_uri': 'YOUR_REDIRECT_URI',
+                'response_type': 'token',
+                'scope': 'https://www.googleapis.com/auth/drive.metadata.readonly',
+                'include_granted_scopes': 'true',
+                'state': 'pass-through value'};
 
-  lock.on("authenticated", function(authResult) {
-    lock.getProfile(authResult.idToken, function(error, profile) {
-        if (error) {
-            alert("Unable to authenticate!");
-            return;
-        }
-        localStorage.setItem('id_token', authResult.idToken);
-        // Display user information
-        show_profile_info(profile);
-        // enable api button
-        $('.btn-api').removeAttr("disabled").text("Press me, I'm authenticated!");
-    });
-  });
+  // Add form parameters as hidden input values.
+  for (var p in params) {
+    var input = document.createElement('input');
+    input.setAttribute('type', 'hidden');
+    input.setAttribute('name', p);
+    input.setAttribute('value', params[p]);
+    form.appendChild(input);
+  }
 
-
-// We use the token from Auth0 to authenticate API calls against restdb.io databases
-// by setting the Authorization header using the Bearer token scheme.
-
-  $('.btn-api').click(function(e) {
-    fetch("https://websitedemo-4db9.restdb.io/rest/items?max=4",{
-    headers:{
-        'Authorization':'Bearer ' + localStorage.getItem("id_token")
-        }
-    }).then(response=>{
-        return response.json();
-    }).then(body=>{
-         $('#apidata').text(JSON.stringify(body, null, '  '));
-    });
-    e.preventDefault();
-  });
-
-
-var show_profile_info = function(profile) {
-     $('.nickname').text(profile.nickname);
-     $('.btn-login').hide();
-     $('.avatar').attr('src', profile.picture).show();
-     $('.btn-logout').show();
-};
-  
-var retrieve_profile = function() {
-    var id_token = localStorage.getItem('id_token');
-    if (id_token) {
-      lock.getProfile(id_token, function (err, profile) {
-        if (err) {
-          return alert('There was an error getting the profile: ' + err.message);
-        }
-        // Display user information
-        show_profile_info(profile);
-        // enable api button
-        $('.btn-api').removeAttr("disabled");
-      });
-    }
-};
+  // Add form to page and submit it to open the OAuth 2.0 endpoint.
+  document.body.appendChild(form);
+  form.submit();
+}
